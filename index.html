@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Carte IAV Hassan II - Madinat Al Irfane</title>
+
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+		integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+		integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+	<style>
+		html, body { height: 100%; margin: 0; }
+		#map { height: 100%; width: 100%; }
+	</style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<script>
+	// 1. Carte centrée sur l'IAV Hassan II (Madinat Al Irfane, Rabat)
+	const IAV = [33.9716, -6.8545];
+	const map = L.map('map').setView(IAV, 16);
+
+	// 2. Fond de carte OpenStreetMap
+	L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+		maxZoom: 19,
+		attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+	}).addTo(map);
+
+	// 3. Marqueur IAV
+	L.marker(IAV).addTo(map)
+		.bindPopup('<b>IAV Hassan II</b><br>Madinat Al Irfane, Rabat');
+
+	// 4. Chargement du fichier GeoJSON
+	fetch('terrain.geojson')
+		.then(response => {
+			if (!response.ok) throw new Error('Fichier introuvable : ' + response.status);
+			return response.json();
+		})
+		.then(data => {
+			const couche = L.geoJSON(data, {
+				style: {
+					color: '#e63946',
+					weight: 2,
+					fillColor: '#e63946',
+					fillOpacity: 0.3
+				},
+				onEachFeature: (feature, layer) => {
+					const props = feature.properties || {};
+					const contenu = Object.entries(props)
+						.map(([k, v]) => `<b>${k}</b> : ${v}`)
+						.join('<br>');
+					if (contenu) layer.bindPopup(contenu);
+				}
+			}).addTo(map);
+
+			// Décommente la ligne suivante pour zoomer sur ton GeoJSON
+			// au lieu de rester centré sur l'IAV :
+			// map.fitBounds(couche.getBounds());
+		})
+		.catch(err => console.error('Erreur GeoJSON :', err));
+</script>
+
+</body>
+</html>
